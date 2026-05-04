@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 # Constants (fixed, do not modify)
 # ---------------------------------------------------------------------------
 
-TIME_BUDGET = 300  # training time budget in seconds (5 minutes)
+TIME_BUDGET = 10800  # training time budget in seconds (3 hours)
 EVAL_EPISODES = 5  # Number of episodes for validation
 TICKER = "SPY"
 LOCAL_CACHE = "C:/tmp/options_chains/spy/"
@@ -36,7 +36,7 @@ def sync_data():
     bucket_name = os.getenv("GCS_BUCKET_NAME", "project_tft_pipeline")
 
     os.makedirs(LOCAL_CACHE, exist_ok=True)
-    print(f"Data: Syncing SPY options from GCS (gs://{bucket_name}/{prefix})...")
+    print(f"Data: Syncing SPY options from GCS (gs://{bucket_name}/{GCS_PREFIX})...")
     
     try:
         client = storage.Client(project=project_id)
@@ -79,20 +79,24 @@ def evaluate_policy(model, env, num_episodes=EVAL_EPISODES):
     dsr_scores = []
     
     for _ in range(num_episodes):
-        obs, _ = env.reset()
+        obs = env.reset()
         done = False
-        truncated = False
         
-        while not (done or truncated):
+        while not done:
             # Model predicts action
             action, _states = model.predict(obs, deterministic=True)
-            obs, reward, done, truncated, info = env.step(action)
+            obs, reward, done, info = env.step(action)
+            # DummyVecEnv returns arrays for done and info
+            if isinstance(done, np.ndarray):
+                done = done[0]
+            if isinstance(info, (list, tuple, np.ndarray)):
+                info = info[0]
             
         if "episode" in info:
             returns.append(info["episode"]["r"])
         
         # Calculate DSR at end of episode based on asset memory
-        asset_memory = env.unwrapped.asset_memory
+        asset_memory = env.get_attr('asset_memory')[0]
         if len(asset_memory) > 1:
             rets = np.diff(asset_memory) / np.array(asset_memory[:-1])
             if np.std(rets) > 0:

@@ -21,7 +21,7 @@ Once you get confirmation, kick off the experimentation.
 
 ## Experimentation
 
-Each experiment runs on a single GPU. The training script runs for a **fixed time budget of 5 minutes** (wall clock training time, excluding startup/compilation). You launch it simply as: `python train.py`.
+Each experiment runs on a single GPU. The training script runs for a **fixed time budget of 3 hours** (wall clock training time, excluding startup/compilation). You launch it simply as: `python train.py`.
 
 **What you CAN do:**
 - Modify `train.py` — this is the primary file you edit. Everything is fair game: SAC hyperparameters (gamma, tau, learning_rate, buffer_size, batch_size, ent_coef), network architecture (net_arch), custom callback modifications, modifying the reward scaling prior to feeding it to the agent, etc.
@@ -31,7 +31,7 @@ Each experiment runs on a single GPU. The training script runs for a **fixed tim
 - Install new packages or add dependencies.
 - Modify the evaluation harness. The `evaluate_policy` function in `prepare.py` is the ground truth metric.
 
-**The goal is simple: get the highest val_dsr.** DSR stands for Differential Sharpe Ratio. Higher is better (indicating greater risk-adjusted returns). Since the time budget is fixed, you don't need to worry about training time — it's always 5 minutes. Everything is fair game: change the architecture, hyperparameters, etc. The only constraint is that the code runs without crashing and finishes within the time budget.
+**The goal is simple: get the highest val_dsr.** DSR stands for Differential Sharpe Ratio. Higher is better (indicating greater risk-adjusted returns). Since the time budget is fixed, you don't need to worry about training time — it's always 3 hours. Everything is fair game: change the architecture, hyperparameters, etc. The only constraint is that the code runs without crashing and finishes within the time budget.
 
 **Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win.
 
@@ -53,7 +53,7 @@ num_params_M:     1.2
 episode_len:      21
 ```
 
-Note that the script is configured to always stop after 5 minutes. You can extract the key metric from the log file:
+Note that the script is configured to always stop after 3 hours. You can extract the key metric from the log file:
 
 ```
 grep "^val_dsr:" run.log
@@ -103,7 +103,7 @@ LOOP FOREVER:
 
 The idea is that you are a completely autonomous researcher trying things out. If they work, keep. If they don't, discard. And you're advancing the branch so that you can iterate.
 
-**Timeout**: Each experiment should take ~5 minutes total (+ a few seconds for startup and eval overhead). If a run exceeds 10 minutes, kill it and treat it as a failure (discard and revert).
+**Timeout**: Each experiment should take ~3 hours total (+ a few minutes for startup and eval overhead). If a run exceeds 3.5 hours, kill it and treat it as a failure (discard and revert).
 
 **Crashes**: If a run crashes (OOM, or a bug, or etc.), use your judgment: If it's something dumb and easy to fix (e.g. a typo, a missing import), fix it and re-run. If the idea itself is fundamentally broken, just skip it, log "crash" as the status in the tsv, and move on.
 
